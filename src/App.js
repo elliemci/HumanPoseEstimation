@@ -3,7 +3,7 @@ import logo from './fitness_logo.png'
 import './App.css'
 
 const handleRunTraining = (event) => {
-// Add code
+  console.log('Run training');
 }
 
 function WelcomeMessage({ children }){
