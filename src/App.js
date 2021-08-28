@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
+import * as tf from '@tensorflow/tfjs'
 import logo from './fitness_logo.png'
 import './App.css'
 
 const handleRunTraining = (event) => {
-  console.log('Run training');
+  // console.log('Run training');
+  tf.tensor([[1, 2, 3], [4, 5, 6], [2, 3]]).print();
 }
 
 function WelcomeMessage({ children }){
