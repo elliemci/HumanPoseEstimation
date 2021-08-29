@@ -11,28 +11,28 @@ const handleRunTraining = (event) => {
   model.add(tf.layers.dense({ units: 1, inputShape: [1] }));
 
    // compile the model with SGD optimizer and meanSquareError loss
-   model.compile({ optimizer: tf.train.sgd(0.1), loss: 'meanSquaredError' });
-   model.summary();
+  model.compile({ optimizer: tf.train.sgd(0.1), loss: 'meanSquaredError' });
+  model.summary();
 
    // define input data based on the equation y = 2x - 1
-   const xs = tf.tensor2d([-1.0, 0.0, 1.0, 2.0, 3.0, 4.0], [6, 1]);
-   const ys = tf.tensor2d([-3.0, -1.0, 2.0, 3.0, 5.0, 7.0], [6, 1]);
+  const xs = tf.tensor2d([-1.0, 0.0, 1.0, 2.0, 3.0, 4.0], [6, 1]);
+  const ys = tf.tensor2d([-3.0, -1.0, 2.0, 3.0, 5.0, 7.0], [6, 1]);
 
    // pass the input and terget attributes into the training function;
    // when doTraining call is done, predict function is called on 10
-   doTraining(model, xs, ys).then(() => {
-     // call the model to predict for unseeen data point
-     const prediction = model.predict(tf.tensor2d([10], [1, 1]));
-     var res = prediction.dataSync()[0];
-     prediction.dispose();
-     // print the prediction result
-     console.log('Result: ' + res);
+  doTraining(model, xs, ys).then(() => {
+    // call the model to predict for unseeen data point
+    const prediction = model.predict(tf.tensor2d([10], [1, 1]));
+    var res = prediction.dataSync()[0];
+    prediction.dispose();
+    // print the prediction result
+    console.log('Result: ' + res);
    });
  };
 
 function WelcomeMessage({ children }) {
-    return <p>{children}</p>
-    } 
+  return <p>{children}</p>
+  }
 
 async function doTraining(model, xs, ys) {
   const history =
@@ -68,7 +68,7 @@ function App() {
           Human Pose Estimation with TensorFlow.js and React
         </a>
         <br />
-        <button onClick={handleRunTraining} > Run training </button>
+        <button onClick={handleRunTraining}>Run training</button>
       </header>
     </div>
   );
