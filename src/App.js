@@ -93,7 +93,6 @@ function App() {
         >
           Human Pose Estimation with TensorFlow.js and React
         </a>
-        <h4>{ console.log({ model })}</h4>
       </header>
     </div>
   );
