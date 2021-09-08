@@ -1,10 +1,14 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import * as tf from '@tensorflow/tfjs'
+import * as posenet from '@tensorflow-models/posenet'
+
+import * as webgl from '@tensorflow/tfjs-backend-webgl'
 import logo from './fitness_logo.png'
 import './App.css'
+import { tSExternalModuleReference } from '@babel/types'
 
 
-const handleRunTraining = (event) => {
+/*const handleRunTraining = (event) => {
 
   // define a one-layer sequential model handled by the listener
   const model = tf.sequential();
@@ -18,7 +22,7 @@ const handleRunTraining = (event) => {
   const xs = tf.tensor2d([-1.0, 0.0, 1.0, 2.0, 3.0, 4.0], [6, 1]);
   const ys = tf.tensor2d([-3.0, -1.0, 2.0, 3.0, 5.0, 7.0], [6, 1]);
 
-   // pass the input and terget attributes into the training function;
+   // pass the input and target attributes into the training function;
    // when doTraining call is done, predict function is called on 10
   doTraining(model, xs, ys).then(() => {
     // call the model to predict for unseeen data point
@@ -28,13 +32,13 @@ const handleRunTraining = (event) => {
     // print the prediction result
     console.log('Result: ' + res);
    });
- };
+ }*/
 
 function WelcomeMessage({ children }) {
   return <p>{children}</p>
   }
 
-async function doTraining(model, xs, ys) {
+/*async function doTraining(model, xs, ys) {
   const history =
     await model.fit(xs, ys,
       {
@@ -51,9 +55,31 @@ async function doTraining(model, xs, ys) {
         }
       });
   console.log(history.params);
-}
+}*/
 
 function App() {
+  /* define a variable model with the useState hook to stores the PoseNet model*/
+  const [model, setModel] = useState(null);
+
+   /* tell React what to do when the component is flushed,
+    with a function which performs the effect */
+  useEffect(() => {
+    loadPosenet();
+  }, [])
+
+  /* Load the PoseNet model */
+  const loadPosenet = async () => {
+    const posenetModel = await posenet.load({
+      architecture: 'MobileNetV1',
+      outputStride: 16,
+      inputResolution: { width: 800, height: 600},
+      multiplier: 0.75
+    });
+
+    setModel(posenetModel)
+    console.log("Posenet Model Loaded!")
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -67,8 +93,7 @@ function App() {
         >
           Human Pose Estimation with TensorFlow.js and React
         </a>
-        <br />
-        <button onClick={handleRunTraining}>Run training</button>
+        <h4>{ console.log({ model })}</h4>
       </header>
     </div>
   );
