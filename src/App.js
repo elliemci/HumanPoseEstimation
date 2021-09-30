@@ -10,7 +10,24 @@ import logo from './fitness_logo.png'
 import './App.css'
 import { tSExternalModuleReference } from '@babel/types';
 import { scalePoses } from '@tensorflow-models/posenet/dist/util';
-import { Grid } from '@material-ui/core';
+import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions } from '@material-ui/core';
+import { makeStyles } from '@material-ui/styles';
+
+/* usestyles() wraping the makeStyles function from material-ui/core 
+   that allows to use javascript to style components, it translates js to css
+   returns a hook to access custom classes */
+const useStyles = makeStyles(() => ({
+  backgroundAppBar : { 
+                        background: '#1875d2' 
+                     },
+  title : { flexGrow : 1,
+            textAlign : 'left' 
+          },
+  statsCard : { width : '250px',
+                margin: '10px'
+              }
+   
+}));
 
 function App() {
   // useRef hook stores reference to the DOM element so that interacting with itbypasses the usua React state-to_UI flow
@@ -21,6 +38,7 @@ function App() {
   const poseEstimationLoop = useRef(null);
   // variable with useState hook
   const [isPoseEstimation, setIsPoseEstimation] = useState(false);
+  const classes = useStyles();
 
   function WelcomeMessage({ children }) {
     return <p>{children}</p>
@@ -126,43 +144,98 @@ function App() {
       </a>
   */}
 
+<Grid container spacing={3}>
+        <Grid item xs={12}>
+          <AppBar position="static" className={classes.backgroundAppBar}>
+            <Toolbar variant="dense">
+              <Typography variant="h6" color="inherit" className={classes.title}>
+                Fitness Assistant
+              </Typography>
+              <Button color="inherit">Start Workout</Button>
+              <Button color="inherit">History</Button>
+              <Button color="inherit">Reset</Button>
+            </Toolbar>
+          </AppBar>
+        </Grid>
+      </Grid>
       <Grid container spacing={3}>
-        <Grid item xs={12}></Grid>
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Webcam
+                ref={webcamRef}
+                style={{
+                  marginTop: "10px",
+                  marginBottom: "10px",
+                  marginLeft: "auto",
+                  marginRight: "auto",
+                  left: 0,
+                  right: 0,
+                  textAlign: "center",
+                  zindex: 9,
+                  width: 800,
+                  height: 600,
+                }}
+              />
+              <canvas
+                ref={canvasRef}
+                style={{
+                  marginTop: "10px",
+                  marginBottom: "10px",
+                  position: "absolute",
+                  marginLeft: "auto",
+                  marginRight: "auto",
+                  left: 0,
+                  right: 0,
+                  textAlign: "center",
+                  zindex: 9,
+                  width: 800,
+                  height: 600,
+                }}
+              />
+            </CardContent>
+            <CardActions style={{ justifyContent: 'center' }}>
+              <Grid container spacing={0}>
+                <Grid item xs={12}>
+                  <Toolbar style={{ justifyContent: 'center' }}>
+                    <Card className={classes.statsCard}>
+                      <CardContent>
+                        <Typography className={classes.title} color="textSecondary" gutterBottom>
+                          Jumping Jacks
+                          </Typography>
+                        <Typography variant="h2" component="h2" color="secondary">
+                          75
+                          </Typography>
+                      </CardContent>
+                    </Card>
+                    <Card className={classes.statsCard}>
+                      <CardContent>
+                        <Typography className={classes.title} color="textSecondary" gutterBottom>
+                          Wall-Sit
+                          </Typography>
+                        <Typography variant="h2" component="h2" color="secondary">
+                          200
+                          </Typography>
+                      </CardContent>
+                    </Card>
+                    <Card className={classes.statsCard}>
+                      <CardContent>
+                        <Typography className={classes.title} color="textSecondary" gutterBottom>
+                          Lunges
+                          </Typography>
+                        <Typography variant="h2" component="h2" color="secondary">
+                          5
+                          </Typography>
+                      </CardContent>
+                    </Card>
+                  </Toolbar>
+                </Grid>
+              </Grid>
+            </CardActions>
+          </Card>
+        </Grid>
       </Grid>
-      <Grid containe spacing={3}>
-        <Grid item xs={12}></Grid>
-      </Grid>
-       
-      
-      {/* <Webcam ref={webcamRef} //ref stores the state so that updating the state doesn’t cause the component to re-render.
-            style={{
-              position: "absolute",
-              marginLeft: "auto",
-              marginRight: "auto",
-              left: 0,
-              right: 0,
-              textAlign: "center",
-              zindex: 9,
-              width: 800,  
-              height: 600, 
-            }}
-          
-
-       <canvas ref={canvasRef}
-          style={{
-          position: "absolute",
-          marginLeft: "auto",
-          marginRight: "auto",
-          left: 0,
-          right: 0,
-          textAlign: "center",
-          zindex: 9,
-          width: 800,  
-          height: 600, 
-          }}
-        /> */}
-
-    </div>
+   </div>
   );
 }
 
