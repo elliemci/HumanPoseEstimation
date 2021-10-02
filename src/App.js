@@ -10,24 +10,41 @@ import logo from './fitness_logo.png'
 import './App.css'
 import { tSExternalModuleReference } from '@babel/types';
 import { scalePoses } from '@tensorflow-models/posenet/dist/util';
-import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions } from '@material-ui/core';
-import { makeStyles } from '@material-ui/styles';
+import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions, FormControl, InputLabel, NativeSelect, FormHelperText } from '@material-ui/core';
+import { TheneProvider, createMuiTheme, makeStyles, mergeClasses } from '@material-ui/core/styles';
 
-/* usestyles() wraping the makeStyles function from material-ui/core 
-   that allows to use javascript to style components, it translates js to css
-   returns a hook to access custom classes */
-const useStyles = makeStyles(() => ({
-  backgroundAppBar : { 
+const theme = createMuiTheme();
+/* usestyles() wraping the makeStyles function from material-ui/core,
+   for creating an object of properties which will be access and inserted
+   into the JSX; makeStyles access the returned useStyle that accepts one 
+   argument: the properties to be used for interpolation in the JSX;
+   assigning that function to a variable commonly called classes; the styles
+   can be inserted into JSX with className={classes.key}, give the element a 
+   class that corresponds to a set of styles created with makeStyles */
+const useStyles = makeStyles((theme) => ({
+
+    backgroundAppBar : { 
                         background: '#1875d2' 
-                     },
-  title : { flexGrow : 1,
-            textAlign : 'left' 
-          },
-  statsCard : { width : '250px',
-                margin: '10px'
-              }
+                      },
+    title : { 
+              flexGrow : 1,
+              textAlign : 'left' 
+            },
+    statsCard : { 
+                  width : '250px',
+                  margin: '10px'
+                },
+    singleLine : {
+                    display :  'flex',
+                    alignItems : 'center',
+                    justifyContent :  'center'
+                  },
+    formControl : {
+                    margin : theme.spacing(1),
+                    minWidth : 120
+                  }
    
-}));
+    }));
 
 function App() {
   // useRef hook stores reference to the DOM element so that interacting with itbypasses the usua React state-to_UI flow
@@ -38,6 +55,10 @@ function App() {
   const poseEstimationLoop = useRef(null);
   // variable with useState hook
   const [isPoseEstimation, setIsPoseEstimation] = useState(false);
+  const [workoutState, setWorkoutState] = useState({ 
+                                                    workout: '',
+                                                    name: 'hai'
+                                                    });
   const classes = useStyles();
 
   function WelcomeMessage({ children }) {
@@ -112,6 +133,14 @@ function App() {
     }
 
     setIsPoseEstimation(current => !current)
+
+  };
+
+  const handleWorkoutSelect = (event) => {
+    //const name = event.target.name;
+    //setWorkoutState({
+      //[name]: event.target.value,
+    //});
 
   };
 
@@ -212,20 +241,20 @@ function App() {
                       <CardContent>
                         <Typography className={classes.title} color="textSecondary" gutterBottom>
                           Wall-Sit
-                          </Typography>
+                        </Typography>
                         <Typography variant="h2" component="h2" color="secondary">
                           200
-                          </Typography>
+                        </Typography>
                       </CardContent>
                     </Card>
                     <Card className={classes.statsCard}>
                       <CardContent>
                         <Typography className={classes.title} color="textSecondary" gutterBottom>
                           Lunges
-                          </Typography>
+                        </Typography>
                         <Typography variant="h2" component="h2" color="secondary">
-                          5
-                          </Typography>
+                          25
+                        </Typography>
                       </CardContent>
                     </Card>
                   </Toolbar>
@@ -233,6 +262,29 @@ function App() {
               </Grid>
             </CardActions>
           </Card>
+        </Grid>
+        <Grid item xs={12} className={classes.singleLine}>
+          <FormControl  required='true' className={classes.formControl} >
+            <InputLabel htmlFor='age-native-helper'>
+              Workout
+            </InputLabel>
+            <NativeSelect value={workoutState.workout} 
+                          onChange={handleWorkoutSelect()}
+                          inputProps={{ name : 'workout', 
+                                        id : 'native-helper'}}>
+              <option>None</option>
+              <option>Jumping Jacks</option>
+              <option>Wall-Sit</option>
+              <option>Lunges</option>
+            </NativeSelect>
+            <FormHelperText>Select training data type</FormHelperText>
+          </FormControl>
+          <Toolbar>
+            <Typography style={{marginRight: 16}}>
+              <Button variant='contained'>Collect Data</Button>
+              <Button variant='contained>'>Train Model</Button>
+            </Typography>
+          </Toolbar>
         </Grid>
       </Grid>
    </div>
