@@ -137,10 +137,11 @@ function App() {
   };
 
   const handleWorkoutSelect = (event) => {
-    //const name = event.target.name;
-    //setWorkoutState({
-      //[name]: event.target.value,
-    //});
+    const name = event.target.name;
+    setWorkoutState({
+      ...workoutState,
+      [name]: event.target.value,
+    });
 
   };
 
