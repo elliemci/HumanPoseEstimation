@@ -1,32 +1,16 @@
 import React, { useEffect, useState, useRef } from "react";
-import Webcam from "react-webcam";
+import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions } from '@material-ui/core';
+import { FormControl, InputLabel, NativeSelect, FormHelperText } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+import logo from './logo.svg';
+import './App.css';
 
 import * as tf from '@tensorflow/tfjs';
 import * as posenet from "@tensorflow-models/posenet";
 import '@tensorflow/tfjs-backend-webgl';
-
+import Webcam from "react-webcam";
 import { drawKeypoints, drawSkeleton } from "./utilities";
-import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions } from '@material-ui/core';
-import { FormControl, InputLabel, NativeSelect, FormHelperText, Snackbar } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
-import MuiAlert from '@material-ui/lab/Alert';
 
-// import logo from './fitness_logo.png'
-import './App.css';
-
-import '@tensorflow/tfjs-backend-webgl';
-
-function Alert(props) {
-  return <MuiAlert elevation={6} variant="filled" {...props} />;
-}
-
-/* usestyles() wraping the makeStyles function from material-ui/core,
-   for creating an object of properties which will be access and inserted
-   into the JSX; makeStyles access the returned useStyle that accepts one 
-   argument: the properties to be used for interpolation in the JSX;
-   assigning that function to a variable commonly called classes; the styles
-   can be inserted into JSX with className={classes.key}, give the element a 
-   class that corresponds to a set of styles created with makeStyles */
 const useStyles = makeStyles((theme) => ({
   backgroundAppBar: {
     background: '#1875d2'
@@ -50,92 +34,25 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-// helper function for delay functionality
-const delay = (time) => {
-  return new Promise((resolve, reject) => {
-    if (isNaN(time)) {
-      reject(new Error('delay requires a valid number.'));
-    } else {
-      setTimeout(resolve, time);
-    }
-  });
-}
-
 function App() {
-
-  // hooks that stores references to the DOM elements bypassesing the usua React state-to_UI flow
-  const webcamRef = useRef(null);
-  const canvasRef = useRef(null);
-  // define a variable model with the useState hook to stores the PoseNet model
-  const [model, setModel] = useState(null);
-  const poseEstimationLoop = useRef(null);
-
-  const [isPoseEstimation, setIsPoseEstimation] = useState(false)
-  const [opCollectData, setOpCollectData] = useState('inactive');
-  const [workoutState, setWorkoutState] = useState({
-    workout: '',
-    name: 'hai'
-  });
-
-  const [snackbarDataColl, setSnackbarDataColl] = useState(false);
-  const [snackbarDataNotColl, setSnackbarDataNotColl] = useState(false);
-
   const classes = useStyles();
 
-  let state = 'waiting';
+  const webcamRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [model, setModel] = useState(null);
+  const poseEstimationLoop = useRef(null);
+  const [isPoseEstimation, setIsPoseEstimation] = useState(false)
 
-  const openSnackbarDataColl = () => {
-    setSnackbarDataColl(true);
-  };
+  const [workoutState, setWorkoutState] = useState({
+    workout: '',
+    name: 'hai',
+  });
 
-  const closeSnackbarDataColl = (event, reason) => {
-    if (reason === 'clickaway') {
-      return;
-    }
-    setSnackbarDataColl(false);
-  };
-
-  const openSnackbarDataNotColl = () => {
-    setSnackbarDataNotColl(true);
-  };
-
-  const closeSnackbarDataNotColl = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setSnackbarDataNotColl(false);
-  };
-
-  /*function WelcomeMessage({ children }) {
-    return <p>{children}</p>
-  }*/
-
-  // tell React what to do when the component is flushed with a function which performs the effect
   useEffect(() => {
     loadPosenet();
-  }, []);
+  }, [])
 
-  const collectData = async () => {
-
-    setOpCollectData("active");
-    await delay(10000); // add 10 seconds delay
-    // Open Material-UI component snackbar and display information
-    openSnackbarDataColl();
-    console.log("collecting");
-    state = "collecting";
-
-    await delay(10000);
-
-    openSnackbarDataNotColl();
-    console.log("not collecting");
-    state = "waiting";
-
-    setOpCollectData("inactive");
-  };
-
-  // Load the PoseNet model, which runs on JavaScript API Web Graphics Library WebGL for rendering 2d
   const loadPosenet = async () => {
-    // variables defined with let, so that can be re-assigned
     let loadedModel = await posenet.load({
       architecture: 'MobileNetV1',
       outputStride: 16,
@@ -153,20 +70,19 @@ function App() {
       webcamRef.current !== null &&
       webcamRef.current.video.readyState === 4
     ) {
-      // Run pose estimation with infinite loop executing each 100 milliseconds
+      // Run pose estimation each 100 milliseconds
       poseEstimationLoop.current = setInterval(() => {
-        // Get Video Properties from webcampRef
+        // Get Video Properties
         const video = webcamRef.current.video;
         const videoWidth = webcamRef.current.video.videoWidth;
         const videoHeight = webcamRef.current.video.videoHeight;
 
-        // set the width and height properties of webcamRef from the video width and height
+        // Set video width
         webcamRef.current.video.width = videoWidth;
         webcamRef.current.video.height = videoHeight;
 
-        // get current time
+        // Do pose estimation
         var tic = new Date().getTime()
-        // do pose estimation from the loaded PoseNet model, passing the webcamRef
         model.estimateSinglePose(video, {
           flipHorizontal: false
         }).then(pose => {
@@ -175,11 +91,6 @@ function App() {
           console.log(tf.getBackend());
           console.log(pose);
 
-          console.log("STATE->" + state);
-          if (state === "collecting") {
-            console.log(workoutState.workout);
-          }
-
           drawCanvas(pose, videoWidth, videoHeight, canvasRef);
         });
       }, 100);
@@ -187,34 +98,23 @@ function App() {
   };
 
   const drawCanvas = (pose, videoWidth, videoHeight, canvas) => {
-
-    const context = canvas.current.getContext("2d");
-
+    const ctx = canvas.current.getContext("2d");
     canvas.current.width = videoWidth;
     canvas.current.height = videoHeight;
 
-    drawKeypoints(pose["keypoints"], 0.5, context);
-    drawSkeleton(pose["keypoints"], 0.5, context);
+    drawKeypoints(pose["keypoints"], 0.5, ctx);
+    drawSkeleton(pose["keypoints"], 0.5, ctx);
   };
 
   const stopPoseEstimation = () => clearInterval(poseEstimationLoop.current);
 
-  const handlePoseEstimation = (input) => {
-    if (input === 'COLLECT_DATA') {
-      if (isPoseEstimation) {
-        if (opCollectData === 'inactive') {
-          setIsPoseEstimation(current => !current);
-          stopPoseEstimation();
-          state = 'waiting';
-        }
-      } else {
-        if (workoutState.workout.length > 0) {
-          setIsPoseEstimation(current => !current);
-          startPoseEstimation();
-          collectData();
-        }
-      }
-    }
+  const handlePoseEstimation = () => {
+    if (isPoseEstimation)
+      stopPoseEstimation();
+    else
+      startPoseEstimation();
+
+    setIsPoseEstimation(current => !current)
   };
 
   const handleWorkoutSelect = (event) => {
@@ -227,19 +127,6 @@ function App() {
 
   return (
     <div className="App">
-
-      {/*<img src={logo} className="App-logo" alt="logo" />
-       <WelcomeMessage children={'Welcome to the Virtual Fitness Assistant!'} />
-       <a
-        className="App-link"
-        href="https://www.manning.com/bundles/pose-estimation-with-TensorFlowjs-ser"
-        target="_blank"
-        rel="noopener noreferrer"
-       > 
-         Human Pose Estimation with TensorFlow.js and React
-      </a>
-      */}
-
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <AppBar position="static" className={classes.backgroundAppBar}>
@@ -298,30 +185,30 @@ function App() {
                       <CardContent>
                         <Typography className={classes.title} color="textSecondary" gutterBottom>
                           Jumping Jacks
-                        </Typography>
+                          </Typography>
                         <Typography variant="h2" component="h2" color="secondary">
                           75
-                        </Typography>
+                          </Typography>
                       </CardContent>
                     </Card>
                     <Card className={classes.statsCard}>
                       <CardContent>
                         <Typography className={classes.title} color="textSecondary" gutterBottom>
                           Wall-Sit
-                        </Typography>
+                          </Typography>
                         <Typography variant="h2" component="h2" color="secondary">
                           200
-                        </Typography>
+                          </Typography>
                       </CardContent>
                     </Card>
                     <Card className={classes.statsCard}>
                       <CardContent>
                         <Typography className={classes.title} color="textSecondary" gutterBottom>
                           Lunges
-                        </Typography>
+                          </Typography>
                         <Typography variant="h2" component="h2" color="secondary">
-                          25
-                        </Typography>
+                          5
+                          </Typography>
                       </CardContent>
                     </Card>
                   </Toolbar>
@@ -345,14 +232,14 @@ function App() {
                   </FormControl>
                   <Toolbar>
                     <Typography style={{ marginRight: 16 }}>
-                      {/* Button with color property: when data is being collected, the button color changes to red */}
-                      <Button variant='contained' onPress={isPoseEstimation ? 'secondary' : 'default'}>Collect Data</Button>
-                      <Button variant='contained>'>Train Model</Button>
+                      <Button variant="contained">
+                        Collect Data
+                        </Button>
                     </Typography>
                     <Typography>
                       <Button variant="contained">
                         Train Model
-                      </Button>
+                        </Button>
                     </Typography>
                   </Toolbar>
                 </Grid>
@@ -361,16 +248,6 @@ function App() {
           </Card>
         </Grid>
       </Grid>
-      <Snackbar open={snackbarDataColl} sutoHideDuration={2000} onClose={closeSnackbarDataColl}>
-        <Alert onClose={closeSnackbarDataColl} severity="info">
-          Started collecting pose data!
-        </Alert>
-      </Snackbar>
-      <Snackbar open={snackbarDataNotColl} sutoHideDuration={2000} onClose={closeSnackbarDataNotColl}>
-        <Alert onClose={closeSnackbarDataNotColl} severity="success">
-          Completed collecting pose data!
-        </Alert>
-      </Snackbar>
     </div>
   );
 }

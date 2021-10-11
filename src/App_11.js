@@ -1,20 +1,19 @@
-import React, { useEffect, useState, useRef } from "react";
-import Webcam from "react-webcam";
+import React, { useEffect, useState, useRef } from 'react';
+import Webcam from 'react-webcam';
+import { drawKeypoints, drawSkeleton } from "./utilities";
 
 import * as tf from '@tensorflow/tfjs';
-import * as posenet from "@tensorflow-models/posenet";
-import '@tensorflow/tfjs-backend-webgl';
+import * as posenet from '@tensorflow-models/posenet';
+//import * as webgl from '@tensorflow/tfjs-backend-webgl';
 
-import { drawKeypoints, drawSkeleton } from "./utilities";
-import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions } from '@material-ui/core';
-import { FormControl, InputLabel, NativeSelect, FormHelperText, Snackbar } from '@material-ui/core';
+//import logo from './fitness_logo.png'
+import './App.css'
+//import { tSExternalModuleReference } from '@babel/types';
+//import { scalePoses } from '@tensorflow-models/posenet/dist/util';
+import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions, FormControl, InputLabel, NativeSelect, FormHelperText, Snackbar } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import MuiAlert from '@material-ui/lab/Alert';
 
-// import logo from './fitness_logo.png'
-import './App.css';
-
-import '@tensorflow/tfjs-backend-webgl';
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -28,6 +27,7 @@ function Alert(props) {
    can be inserted into JSX with className={classes.key}, give the element a 
    class that corresponds to a set of styles created with makeStyles */
 const useStyles = makeStyles((theme) => ({
+
   backgroundAppBar: {
     background: '#1875d2'
   },
@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
   },
   statsCard: {
     width: '250px',
-    margin: '10px',
+    margin: '10px'
   },
   singleLine: {
     display: 'flex',
@@ -46,15 +46,16 @@ const useStyles = makeStyles((theme) => ({
   },
   formControl: {
     margin: theme.spacing(1),
-    minWidth: 120,
+    minWidth: 120
   }
+
 }));
 
-// helper function for delay functionality
+// helper function to add the delay functionality    
 const delay = (time) => {
   return new Promise((resolve, reject) => {
     if (isNaN(time)) {
-      reject(new Error('delay requires a valid number.'));
+      reject(new Error("Delay requires a valid number."));
     } else {
       setTimeout(resolve, time);
     }
@@ -62,21 +63,18 @@ const delay = (time) => {
 }
 
 function App() {
-
-  // hooks that stores references to the DOM elements bypassesing the usua React state-to_UI flow
+  // useRef hook stores reference to the DOM element so that interacting with itbypasses the usua React state-to_UI flow
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
-  // define a variable model with the useState hook to stores the PoseNet model
+  /* define a variable model with the useState hook to stores the PoseNet model */
   const [model, setModel] = useState(null);
   const poseEstimationLoop = useRef(null);
-
-  const [isPoseEstimation, setIsPoseEstimation] = useState(false)
-  const [opCollectData, setOpCollectData] = useState('inactive');
+  const [isPoseEstimation, setIsPoseEstimation] = useState(false);
   const [workoutState, setWorkoutState] = useState({
     workout: '',
     name: 'hai'
   });
-
+  const [opCollectData, setOpCollectData] = useState(false);
   const [snackbarDataColl, setSnackbarDataColl] = useState(false);
   const [snackbarDataNotColl, setSnackbarDataNotColl] = useState(false);
 
@@ -86,10 +84,10 @@ function App() {
 
   const openSnackbarDataColl = () => {
     setSnackbarDataColl(true);
-  };
+  }
 
   const closeSnackbarDataColl = (event, reason) => {
-    if (reason === 'clickaway') {
+    if (reason === "clickaway") {
       return;
     }
     setSnackbarDataColl(false);
@@ -97,7 +95,7 @@ function App() {
 
   const openSnackbarDataNotColl = () => {
     setSnackbarDataNotColl(true);
-  };
+  }
 
   const closeSnackbarDataNotColl = (event, reason) => {
     if (reason === "clickaway") {
@@ -110,52 +108,38 @@ function App() {
     return <p>{children}</p>
   }*/
 
-  // tell React what to do when the component is flushed with a function which performs the effect
+  // useRef hook allows a direct reference to the DOM element in the functional component
+  useRef(() => {
+  });
+
+  // tell React what to do when the component is flushed, with a function which performs the effect  
   useEffect(() => {
     loadPosenet();
-  }, []);
-
-  const collectData = async () => {
-
-    setOpCollectData("active");
-    await delay(10000); // add 10 seconds delay
-    // Open Material-UI component snackbar and display information
-    openSnackbarDataColl();
-    console.log("collecting");
-    state = "collecting";
-
-    await delay(10000);
-
-    openSnackbarDataNotColl();
-    console.log("not collecting");
-    state = "waiting";
-
-    setOpCollectData("inactive");
-  };
+  }, [])
 
   // Load the PoseNet model, which runs on JavaScript API Web Graphics Library WebGL for rendering 2d
   const loadPosenet = async () => {
-    // variables defined with let, so that can be re-assigned
-    let loadedModel = await posenet.load({
+    // variables defined with let can be re-assigned
+    let posenetModel = await posenet.load({
       architecture: 'MobileNetV1',
       outputStride: 16,
       inputResolution: { width: 800, height: 600 },
       multiplier: 0.75
     });
 
-    setModel(loadedModel)
+    setModel(posenetModel)
     console.log("Posenet Model Loaded..")
   };
 
   const startPoseEstimation = () => {
     if (
-      typeof webcamRef.current !== "undefined" &&
+      typeof webcamRef.current !== "undefined" && // check for undefined property
       webcamRef.current !== null &&
       webcamRef.current.video.readyState === 4
     ) {
-      // Run pose estimation with infinite loop executing each 100 milliseconds
+      // to run the pose estimation define infinite loop executing each 100 miliseconds
       poseEstimationLoop.current = setInterval(() => {
-        // Get Video Properties from webcampRef
+        // get video Properties from webcampRef
         const video = webcamRef.current.video;
         const videoWidth = webcamRef.current.video.videoWidth;
         const videoHeight = webcamRef.current.video.videoHeight;
@@ -164,12 +148,11 @@ function App() {
         webcamRef.current.video.width = videoWidth;
         webcamRef.current.video.height = videoHeight;
 
-        // get current time
+        // get the current time
         var tic = new Date().getTime()
         // do pose estimation from the loaded PoseNet model, passing the webcamRef
-        model.estimateSinglePose(video, {
-          flipHorizontal: false
-        }).then(pose => {
+        model.estimateSinglePose(video, { flipHorizontal: false }).then(pose => {
+          // in the promise of the estimateSinglePose method, log the end time and TensorFlow.js backend and the pose information
           var toc = new Date().getTime();
           console.log(toc - tic, " ms");
           console.log(tf.getBackend());
@@ -184,17 +167,6 @@ function App() {
         });
       }, 100);
     }
-  };
-
-  const drawCanvas = (pose, videoWidth, videoHeight, canvas) => {
-
-    const context = canvas.current.getContext("2d");
-
-    canvas.current.width = videoWidth;
-    canvas.current.height = videoHeight;
-
-    drawKeypoints(pose["keypoints"], 0.5, context);
-    drawSkeleton(pose["keypoints"], 0.5, context);
   };
 
   const stopPoseEstimation = () => clearInterval(poseEstimationLoop.current);
@@ -217,6 +189,7 @@ function App() {
     }
   };
 
+
   const handleWorkoutSelect = (event) => {
     const name = event.target.name;
     setWorkoutState({
@@ -225,6 +198,39 @@ function App() {
     });
   };
 
+  const collectData = async () => {
+
+    setOpCollectData("active");
+    await delay(10000); // add 10 seconds delay
+    // Open Material-UI component snackbar and display information
+    openSnackbarDataColl();
+    console.log("collecting");
+    state = "collecting";
+
+    await delay(10000);
+
+    openSnackbarDataNotColl();
+    console.log("not collecting");
+    state = "waiting";
+
+    setOpCollectData("inactive");
+
+  };
+
+  // Pose estimation is calculated and displayed on the canvas over the webcam view
+  const drawCanvas = (pose, videoWidth, videaoHeight, canvas) => {
+
+    const context = canvas.current.getContext("2d");
+
+    canvas.current.width = videoWidth;
+    canvas.current.height = videaoHeight;
+
+    drawKeypoints(pose["keypoints"], 0.5, context);
+    drawSkeleton(pose["keypoints"], 0.5, context);
+    // drawBoundingBox(pose["keypoints"], context);
+  };
+
+  //? <img src={logo} className="App-logo" alt="logo" /> prevents the Webcam working ?
   return (
     <div className="App">
 
@@ -327,26 +333,25 @@ function App() {
                   </Toolbar>
                 </Grid>
                 <Grid item xs={12} className={classes.singleLine}>
-                  <FormControl className={classes.formControl} required>
+                  <FormControl required className={classes.formControl}>
                     <InputLabel htmlFor="age-native-helper">Workout</InputLabel>
                     <NativeSelect
                       value={workoutState.workout}
                       onChange={handleWorkoutSelect}
                       inputProps={{
-                        name: 'workout',
-                        id: 'age-native-helper',
+                        name: "workout",
+                        id: "age-native-helper",
                       }}>
                       <option aria-label="None" value="" />
-                      <option value={'JUMPING_JACKS'}>Jumping Jacks</option>
-                      <option value={'WALL_SIT'}>Wall-Sit</option>
-                      <option value={'LUNGES'}>Lunges</option>
+                      <option value={"JUMPING_JACKS"}>Jumping Jacks</option>
+                      <option value={"WALL_SIT"}>Wall-Sit</option>
+                      <option value={"LUNGES"}>Lunges</option>
                     </NativeSelect>
                     <FormHelperText>Select training data type</FormHelperText>
                   </FormControl>
                   <Toolbar>
                     <Typography style={{ marginRight: 16 }}>
-                      {/* Button with color property: when data is being collected, the button color changes to red */}
-                      <Button variant='contained' onPress={isPoseEstimation ? 'secondary' : 'default'}>Collect Data</Button>
+                      <Button variant='contained'>Collect Data</Button>
                       <Button variant='contained>'>Train Model</Button>
                     </Typography>
                     <Typography>
