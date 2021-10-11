@@ -200,6 +200,7 @@ function App() {
   const stopPoseEstimation = () => clearInterval(poseEstimationLoop.current);
 
   const handlePoseEstimation = (input) => {
+    //verify if the input is the COLLECT_DATA from the onClick button event handler
     if (input === 'COLLECT_DATA') {
       if (isPoseEstimation) {
         if (opCollectData === 'inactive') {
@@ -345,8 +346,11 @@ function App() {
                   </FormControl>
                   <Toolbar>
                     <Typography style={{ marginRight: 16 }}>
-                      {/* Button with color property: when data is being collected, the button color changes to red */}
-                      <Button variant='contained' onPress={isPoseEstimation ? 'secondary' : 'default'}>Collect Data</Button>
+                      {/* Button with text and color property, onClick event handler calls the handle PoseEstimation method
+                        and passes COLLECT_DATA as argument. The button text and color property change when data has being collected */}
+                      <Button variant='contained' onClick={() => handlePoseEstimation('COLLECT_DATA')} color={isPoseEstimation ? 'secondary' : 'default'}>
+                        {isPoseEstimation ? "Stop" : "Collect Data"}
+                      </Button>
                       <Button variant='contained>'>Train Model</Button>
                     </Typography>
                     <Typography>
