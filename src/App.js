@@ -16,6 +16,9 @@ import './App.css';
 
 import '@tensorflow/tfjs-backend-webgl';
 
+import { processData } from "./dataProcessing";
+import { runTraining } from './modelTraining';
+
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
 }
@@ -80,7 +83,13 @@ function App() {
   const [snackbarDataColl, setSnackbarDataColl] = useState(false);
   const [snackbarDataNotColl, setSnackbarDataNotColl] = useState(false);
 
+  const [rawData, setRawData] = useState([]);
+  const [dataCollect, setDataCollect] = useState(false);
+
   const classes = useStyles();
+
+  const windowWidth = 800;
+  const windowHeight = 600;
 
   let state = 'waiting';
 
@@ -155,6 +164,7 @@ function App() {
     ) {
       // Run pose estimation with infinite loop executing each 100 milliseconds
       poseEstimationLoop.current = setInterval(() => {
+
         // Get Video Properties from webcampRef
         const video = webcamRef.current.video;
         const videoWidth = webcamRef.current.video.videoWidth;
@@ -171,13 +181,42 @@ function App() {
           flipHorizontal: false
         }).then(pose => {
           var toc = new Date().getTime();
-          console.log(toc - tic, " ms");
-          console.log(tf.getBackend());
-          console.log(pose);
+          /* each pose returned by the PoseNet model comes with 
+             17 data points with coordinates (x,y) and a score */
+          let inputs = [];
+          // a loop to iterate through the pose key data points
+          for (let i = 0; i < pose.keypoints.length; i++) {
+            // for keypoints with score higher than 0.1 normalize to [-1,1] using video dims
+            let x = pose.keypoints[i].position.x;
+            let y = pose.keypoints[i].position.y;
+            // noisy data removal based on low scores
+            if (pose.keypoints[i].score < 0.1) {
+              x = 0;
+              y = 0;
+            } else {
+              // data normalization 
+              x = (x / (windowWidth / 2)) - 1;
+              y = (y / (windowHeight / 2)) - 1;
+              // save the x and y coordiantes into a flatten/ single array
+              inputs.push(x);
+              inputs.push(y);
+            }
+          }
 
           console.log("STATE->" + state);
+
           if (state === "collecting") {
+            console.log(toc - tic, " ms");
+            console.log(tf.getBackend());
+            console.log(pose);
             console.log(workoutState.workout);
+
+            // features in xs, training targets in ys
+            const rawDataRow = { xs: inputs, ys: workoutState.workout }
+
+            rawData.push(rawDataRow);
+            setRawData(rawData); // update raw data
+
           }
 
           drawCanvas(pose, videoWidth, videoHeight, canvasRef);
@@ -207,12 +246,14 @@ function App() {
           setIsPoseEstimation(current => !current);
           stopPoseEstimation();
           state = 'waiting';
+          setDataCollect(false);
         }
       } else {
         if (workoutState.workout.length > 0) {
           setIsPoseEstimation(current => !current);
           startPoseEstimation();
           collectData();
+          setDataCollect(true);
         }
       }
     }
@@ -225,6 +266,16 @@ function App() {
       [name]: event.target.value,
     });
   };
+
+  const handleTrainModel = async () => {
+
+    if (rawData.length > 0) {
+      // print collected data size info
+      console.log('Data size: ' + rawData.length);
+      // call the data processing helper function which returns three variables
+      const [numOfFeatures, convertedDatasetTraining, convertedDatasetValidation] = processData(rawData);
+    }
+  }
 
   return (
     <div className="App">
@@ -337,7 +388,7 @@ function App() {
                         name: 'workout',
                         id: 'age-native-helper',
                       }}>
-                      <option aria-label="None" value="" />
+                      <option aria-label='None' value="" />
                       <option value={'JUMPING_JACKS'}>Jumping Jacks</option>
                       <option value={'WALL_SIT'}>Wall-Sit</option>
                       <option value={'LUNGES'}>Lunges</option>
@@ -351,10 +402,9 @@ function App() {
                       <Button variant='contained' onClick={() => handlePoseEstimation('COLLECT_DATA')} color={isPoseEstimation ? 'secondary' : 'default'}>
                         {isPoseEstimation ? "Stop" : "Collect Data"}
                       </Button>
-                      <Button variant='contained>'>Train Model</Button>
-                    </Typography>
-                    <Typography>
-                      <Button variant="contained">
+                    </ Typography>
+                    <Typography style={{ marginRight: 16 }}>
+                      <Button variant='contained>' onClick={() => handleTrainModel()} disabled={dataCollect}>
                         Train Model
                       </Button>
                     </Typography>
