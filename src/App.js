@@ -71,6 +71,7 @@ function App() {
   const canvasRef = useRef(null);
   // define a variable model with the useState hook to stores the PoseNet model
   const [model, setModel] = useState(null);
+  const [trainModel, setTrainModel] = useState(false);
   const poseEstimationLoop = useRef(null);
 
   const [isPoseEstimation, setIsPoseEstimation] = useState(false)
@@ -272,8 +273,12 @@ function App() {
     if (rawData.length > 0) {
       // print collected data size info
       console.log('Data size: ' + rawData.length);
+      setTrainModel(true);
       // call the data processing helper function which returns three variables
       const [numOfFeatures, convertedDatasetTraining, convertedDatasetValidation] = processData(rawData);
+      // call the function runTraining from modelTraining.js, since async call with await
+      await runTraining(convertedDatasetTraining, convertedDatasetValidation, numOfFeatures);
+      setTrainModel(false);
     }
   }
 
@@ -362,7 +367,7 @@ function App() {
                           Wall-Sit
                         </Typography>
                         <Typography variant="h2" component="h2" color="secondary">
-                          200
+                          20
                         </Typography>
                       </CardContent>
                     </Card>
@@ -398,13 +403,20 @@ function App() {
                   <Toolbar>
                     <Typography style={{ marginRight: 16 }}>
                       {/* Button with text and color property, onClick event handler calls the handle PoseEstimation method
-                        and passes COLLECT_DATA as argument. The button text and color property change when data has being collected */}
-                      <Button variant='contained' onClick={() => handlePoseEstimation('COLLECT_DATA')} color={isPoseEstimation ? 'secondary' : 'default'}>
+                        and passes COLLECT_DATA as argument. The button text and color property change when data has being collected 
+                        When training is running, the Collect Data button should stay disabled. */}
+                      <Button variant='contained'
+                        onClick={() => handlePoseEstimation('COLLECT_DATA')}
+                        color={isPoseEstimation ? 'secondary' : 'default'}
+                        // When training is running, the Collect Data button is disabled.
+                        disabled={trainModel}>
                         {isPoseEstimation ? "Stop" : "Collect Data"}
                       </Button>
                     </ Typography>
                     <Typography style={{ marginRight: 16 }}>
-                      <Button variant='contained>' onClick={() => handleTrainModel()} disabled={dataCollect}>
+                      <Button variant='contained>'
+                        onClick={() => handleTrainModel()}
+                        disabled={dataCollect}>
                         Train Model
                       </Button>
                     </Typography>
