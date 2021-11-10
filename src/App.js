@@ -163,7 +163,7 @@ function App() {
       webcamRef.current !== null &&
       webcamRef.current.video.readyState === 4
     ) {
-      // Run pose estimation with infinite loop executing each 100 milliseconds
+      // Run pose estimation with infinite loop executing every 100 milliseconds
       poseEstimationLoop.current = setInterval(() => {
 
         // Get Video Properties from webcampRef
@@ -182,8 +182,7 @@ function App() {
           flipHorizontal: false
         }).then(pose => {
           var toc = new Date().getTime();
-          /* each pose returned by the PoseNet model comes with 
-             17 data points with coordinates (x,y) and a score */
+          //each pose returned by the PoseNet model comes with 17 data points with coordinates (x,y) and a score 
           let inputs = [];
           // a loop to iterate through the pose key data points
           for (let i = 0; i < pose.keypoints.length; i++) {
@@ -198,10 +197,10 @@ function App() {
               // data normalization 
               x = (x / (windowWidth / 2)) - 1;
               y = (y / (windowHeight / 2)) - 1;
-              // save the x and y coordiantes into a flatten/ single array
-              inputs.push(x);
-              inputs.push(y);
             }
+            // save the x and y coordiantes into a flatten/ single array
+            inputs.push(x);
+            inputs.push(y);
           }
 
           console.log("STATE->" + state);
@@ -276,8 +275,9 @@ function App() {
       setTrainModel(true);
       // call the data processing helper function which returns three variables
       const [numOfFeatures, convertedDatasetTraining, convertedDatasetValidation] = processData(rawData);
-      // call the function runTraining from modelTraining.js, since async call with await
+      // call the function runTraining from modelTraining.js, since async call with await; pass the result from the processData
       await runTraining(convertedDatasetTraining, convertedDatasetValidation, numOfFeatures);
+      // after training the set the trainModel variable with a boolean value of true by calling setTrainingModel
       setTrainModel(false);
     }
   }

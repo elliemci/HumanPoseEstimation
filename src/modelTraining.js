@@ -50,6 +50,7 @@ export async function runTraining(convertedDatasetTraining, convertedDatasetVali
     const model = buildModel(numOfFeatures);
 
     const hist = await model.fitDataset(
+
         convertedDatasetTraining, // dataset
         {                         // arg, an object 
             epochs: 100,
@@ -59,13 +60,23 @@ export async function runTraining(convertedDatasetTraining, convertedDatasetVali
                     console.log("Epoch: " + epoch +
                         " Loss: " + logs.loss +
                         " Accuracy: " + logs.acc +
-                        " Validation loss: " + logs.val_loss);
+                        " Validation loss: " + logs.val_loss +
+                        " Validation accuracy: " + logs.val_acc);
                 }
             }
         }
     );
-    // save the model in local browser storage
-    await model.save('indexddb://fitness-assistant-model');
+    // await model.save('downloads://fitness-assistant-model'); downloads the .json and binary weight values files
+    await model.save('localstorage://fitness-assistant-model'); //saves the model in the browser's local storage
+
+    // save the model in local browser IndexDB storage which allows larger limits on the objects sizes
+    //await model.save('indexddb://fitness-assistant-model');
     console.log("Model saved!");
 
 };
+
+/*
+const loadedModel = await tf.loadLayersModel('fitness-assistant-model');
+console.log('Prediction from loaded model:');
+loadedModel.predict(...).print();
+*/
