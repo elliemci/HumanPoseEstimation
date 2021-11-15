@@ -68,10 +68,10 @@ export async function runTraining(convertedDatasetTraining, convertedDatasetVali
         }
     );
     // await model.save('downloads://fitness-assistant-model'); downloads the .json and binary weight values files
-    await model.save('localstorage://fitness-assistant-model'); //saves the model in the browser's local storage
+    //await model.save('localstorage://fitness-assistant-model'); //saves the model in the browser's local storage
 
     // save the model in local browser IndexDB storage which allows larger limits on the objects sizes
-    //await model.save('indexddb://fitness-assistant-model');
+    await model.save('indexeddb://fitness-assistant-model');
     console.log("Model saved!");
 
 };

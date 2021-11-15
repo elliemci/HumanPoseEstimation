@@ -24,9 +24,9 @@ export function processData(rawData) {
             const labels = [
                 /* implicit check for the type of exercises, value of 1, and 0 if not true
                    and converting the target into array 1, 0, 0 = JUMPING_JACKS */
-                ys = "JUMPING_JACKS" ? 1 : 0,
-                ys = "WALL_SIT" ? 1 : 0,
-                ys = "LUNGES" ? 1 : 0
+                ys == "JUMPING_JACKS" ? 1 : 0,
+                ys == "WALL_SIT" ? 1 : 0,
+                ys == "LUNGES" ? 1 : 0
             ]
             return { xs: Object.values(xs), ys: Object.values(labels) };
         }).batch(30)
@@ -36,10 +36,12 @@ export function processData(rawData) {
         rawDatasetValidation.map(({ xs, ys }) => {
             const labels = [
                 /* implicit check for the type of exercises, value of 1, and 0 if not true
-                   and converting the target into array 1, 0, 0 = JUMPING_JACKS */
-                ys = "JUMPING_JACKS" ? 1 : 0,
-                ys = "WALL_SIT" ? 1 : 0,
-                ys = "LUNGES" ? 1 : 0
+                   and converting the target into array 1, 0, 0 = JUMPING_JACKS 
+                   NB: The == operator compares for equality after doing any necessary type conversions vs
+                   the === operator does not do the conversion and returns flase when two values are not the same type. */
+                ys == "JUMPING_JACKS" ? 1 : 0,
+                ys == "WALL_SIT" ? 1 : 0,
+                ys == "LUNGES" ? 1 : 0
             ]
             return { xs: Object.values(xs), ys: Object.values(labels) };
         }).batch(30)
