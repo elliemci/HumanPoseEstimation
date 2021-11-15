@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs'
 
-
+// Define a sequential model with tree dense layers using TesnorFlow.js
 /* function buildModel(numOfFeatures) {
 
     const model = tf.sequential({
@@ -37,7 +37,7 @@ function buildModel(numOfFeatures) {
     }));
     model.add(tf.layers.dense({
         units: 3,
-        activation: 'softmax'
+        activation: 'softmax' // for multiple outputs
     }));
 
     model.compile({ optimizer: tf.train.adam(0.001), loss: 'categoricalCrossentropy', metrics: 'accuracy' });
@@ -45,14 +45,15 @@ function buildModel(numOfFeatures) {
     return model;
 };
 
+// The function called from Apps.js to train the model to classify workouts by type
 export async function runTraining(convertedDatasetTraining, convertedDatasetValidation, numOfFeatures) {
-
+    // first build the model
     const model = buildModel(numOfFeatures);
-
+    // TensorFlow.js tf.LayersModel class method .fitDataset() trains the model using datest object
     const hist = await model.fitDataset(
 
         convertedDatasetTraining, // dataset
-        {                         // arg, an object 
+        {                         // args
             epochs: 100,
             validationData: convertedDatasetValidation,
             callbacks: {

@@ -6,7 +6,7 @@ import * as posenet from "@tensorflow-models/posenet";
 import '@tensorflow/tfjs-backend-webgl';
 
 import { drawKeypoints, drawSkeleton } from "./utilities";
-import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions } from '@material-ui/core';
+import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions, CircularProgress } from '@material-ui/core';
 import { FormControl, InputLabel, NativeSelect, FormHelperText, Snackbar } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import MuiAlert from '@material-ui/lab/Alert';
@@ -71,6 +71,7 @@ function App() {
   const canvasRef = useRef(null);
   // define a variable model with the useState hook to stores the PoseNet model
   const [model, setModel] = useState(null);
+  // define trainModel variable using React hook useState 
   const [trainModel, setTrainModel] = useState(false);
   const poseEstimationLoop = useRef(null);
 
@@ -120,6 +121,21 @@ function App() {
     return <p>{children}</p>
   }*/
 
+  // Define snackbarTrainingError
+  const [snackbarTrainingError, setSnackbarTrainingError] = useState(false);
+
+  // two methods to include a notification when there is no training data
+  const openSnackbarTrainingError = () => {
+    setSnackbarTrainingError(true);
+  };
+
+  const closeSnackbarTrainingError = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarTrainingError(false);
+  };
+
   // tell React what to do when the component is flushed with a function which performs the effect
   useEffect(() => {
     loadPosenet();
@@ -134,7 +150,7 @@ function App() {
     console.log("collecting");
     state = "collecting";
 
-    await delay(10000);
+    await delay(30000); //30 seconds data collection
 
     openSnackbarDataNotColl();
     console.log("not collecting");
@@ -272,13 +288,16 @@ function App() {
     if (rawData.length > 0) {
       // print collected data size info
       console.log('Data size: ' + rawData.length);
+      // use setTrainModel to set the trainModel variable to true before training
       setTrainModel(true);
       // call the data processing helper function which returns three variables
       const [numOfFeatures, convertedDatasetTraining, convertedDatasetValidation] = processData(rawData);
-      // call the function runTraining from modelTraining.js, since async call with await; pass the result from the processData
+      // call the function runTraining from modelTraining.js, called with await since asynchrous, passing the result from the processData
       await runTraining(convertedDatasetTraining, convertedDatasetValidation, numOfFeatures);
-      // after training the set the trainModel variable with a boolean value of true by calling setTrainingModel
+      // after training the set the trainModel variable to false
       setTrainModel(false);
+    } else {
+      openSnackbarTrainingError();
     }
   }
 
@@ -408,7 +427,7 @@ function App() {
                       <Button variant='contained'
                         onClick={() => handlePoseEstimation('COLLECT_DATA')}
                         color={isPoseEstimation ? 'secondary' : 'default'}
-                        // When training is running, the Collect Data button is disabled.
+                        // When training is running, the Collect Data button should stay disabled.
                         disabled={trainModel}>
                         {isPoseEstimation ? "Stop" : "Collect Data"}
                       </Button>
@@ -420,6 +439,8 @@ function App() {
                         Train Model
                       </Button>
                     </Typography>
+                    {/* CircularProgress component indicating when the raining process is running */}
+                    {trainModel ? <CircularProgress color="secondary" /> : null}
                   </Toolbar>
                 </Grid>
               </Grid>
@@ -427,14 +448,19 @@ function App() {
           </Card>
         </Grid>
       </Grid>
-      <Snackbar open={snackbarDataColl} sutoHideDuration={2000} onClose={closeSnackbarDataColl}>
+      <Snackbar open={snackbarDataColl} autoHideDuration={2000} onClose={closeSnackbarDataColl}>
         <Alert onClose={closeSnackbarDataColl} severity="info">
           Started collecting pose data!
         </Alert>
       </Snackbar>
-      <Snackbar open={snackbarDataNotColl} sutoHideDuration={2000} onClose={closeSnackbarDataNotColl}>
+      <Snackbar open={snackbarDataNotColl} autoHideDuration={2000} onClose={closeSnackbarDataNotColl}>
         <Alert onClose={closeSnackbarDataNotColl} severity="success">
           Completed collecting pose data!
+        </Alert>
+      </Snackbar>
+      <Snackbar open={snackbarTrainingError} autoHideDuration={2000} onclose={closeSnackbarTrainingError}>
+        <Alert onClose={closeSnackbarTrainingError} severity="error">
+          Training data is not available!
         </Alert>
       </Snackbar>
     </div>
