@@ -17,7 +17,8 @@ import './App.css';
 import '@tensorflow/tfjs-backend-webgl';
 
 import { processData } from "./dataProcessing";
-import { runTraining } from './modelTraining';
+import { runTraining } from "./modelTraining";
+import { runInference } from "./modelInference"
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -163,10 +164,10 @@ function App() {
   const loadPosenet = async () => {
     // variables defined with let, so that can be re-assigned
     let loadedModel = await posenet.load({
-      architecture: 'MobileNetV1',
-      outputStride: 16,
+      architecture: 'MobileNetV1', // ResNet has higher accuracy, but longer load and inferance time
+      outputStride: 16, // how much we’re scaling down the output relative to the input image size, the higher the value the faster the performance the lower the accuracy
       inputResolution: { width: 800, height: 600 },
-      multiplier: 0.75
+      multiplier: 0.75 // image scale factor
     });
 
     setModel(loadedModel)
@@ -195,7 +196,7 @@ function App() {
         var tic = new Date().getTime()
         // do pose estimation from the loaded PoseNet model, passing the webcamRef
         model.estimateSinglePose(video, {
-          flipHorizontal: false
+          flipHorizontal: false // an input to posnet, if the pose should be flipped/ mirrored horizontally
         }).then(pose => {
           var toc = new Date().getTime();
           //each pose returned by the PoseNet model comes with 17 data points with coordinates (x,y) and a score 
