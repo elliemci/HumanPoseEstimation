@@ -85,14 +85,31 @@ function App() {
 
   const [snackbarDataColl, setSnackbarDataColl] = useState(false);
   const [snackbarDataNotColl, setSnackbarDataNotColl] = useState(false);
+  const [snackbarWorkoutError, setSnackbarWorkoutError] = useState(false);
 
   const [rawData, setRawData] = useState([]);
   const [dataCollect, setDataCollect] = useState(false);
+  const [isPoseEstimationWorkout, setIsPoseEstimationWorkout] = useState(false);
 
   const classes = useStyles();
+  let runningWorkout = false;
 
   const windowWidth = 800;
   const windowHeight = 600;
+
+  // global variables
+  var modelWorkout = null;
+  var workoutCallDelay = false;
+  var workoutDelayStart = 0;
+
+  // variables for the UI cards
+  const [jumpingJackCount, setJumpingJackCount] = useState(0);
+  let jjCount = 0;
+  const [wallSitCount, setWallSitCount] = useState(0);
+  let wsCount = 0;
+  const [lungesCount, setLungesCount] = useState(0);
+  let lCount = 0;
+
 
   let state = 'waiting';
 
@@ -137,6 +154,17 @@ function App() {
     setSnackbarTrainingError(false);
   };
 
+  // snackbar componets displaying an error if no saved model is found
+  const openSnackbarWorkoutError = () => {
+    setSnackbarWorkoutError(true);
+  }
+
+  const closeSnackbarWorkoutError = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarWorkoutError(false);
+  }
   // tell React what to do when the component is flushed with a function which performs the effect
   useEffect(() => {
     loadPosenet();
@@ -235,6 +263,39 @@ function App() {
             setRawData(rawData); // update raw data
 
           }
+          // code to process the inference results
+          if (runningWorkout === true) {
+            if (workoutCallDelay === false) {
+              // variable to hold the data for inference
+              const rawDataRow = { xs: inputs };
+              const result = runInference(modelWorkout, rawDataRow);
+              // process the result and count the workout type
+              if (result !== null) {
+                if (result === 'JUMPING_JACKS') {
+                  jjCount += 1;
+                  setJumpingJackCount(jjCount);
+                  updateStats('JUMPING_JACKS');
+                } else if (result === 'WALL_SIT') {
+                  wsCount += 1;
+                  setWallSitCount(wsCount);
+                  updateStats('WALL_SIT');
+                } else if (result === 'LUNGES') {
+                  lCount += 1;
+                  setLungesCount(lCount);
+                  updateStats('LUNGES');
+                }
+                workoutCallDelay = true;
+                workoutDelayStart = new Date().getTime();
+              }
+            } else {
+              // check if still keep the pause of 1.5 seconds before allow the next inference call
+              const workoutTimeDiff = new Date().getTime() - workoutDelayStart;
+              if (workoutTimeDiff > 1500) {
+                workoutDelayStart = 0;
+                workoutCallDelay = false;
+              }
+            }
+          }
 
           drawCanvas(pose, videoWidth, videoHeight, canvasRef);
         });
@@ -255,8 +316,26 @@ function App() {
 
   const stopPoseEstimation = () => clearInterval(poseEstimationLoop.current);
 
-  const handlePoseEstimation = (input) => {
-    //verify if the input is the COLLECT_DATA from the onClick button event handler
+  const handlePoseEstimation = async (input) => {
+    // check the mode
+    if (input === "START_WORKOUT") {
+      if (isPoseEstimationWorkout) {
+        // stop the workout and execute code when Stop button is pressed
+        runningWorkout = false;
+        setIsPoseEstimationWorkout(false);
+        stopPoseEstimation();
+      } else {
+        runningWorkout = true;
+        try {// load the saved model
+          modelWorkout = await tf.loadLayersModel('indexeddb://fitness-assistant-model');
+          setIsPoseEstimationWorkout(true);
+          startPoseEstimation();
+        } catch (err) {// display an error if no saved model was found
+          openSnackbarWorkoutError();
+        }
+      }
+    }
+
     if (input === 'COLLECT_DATA') {
       if (isPoseEstimation) {
         if (opCollectData === 'inactive') {
@@ -302,6 +381,16 @@ function App() {
     }
   }
 
+  // update local storage for workout type and increment counter for current workout type
+  const updateStats = (workoutType) => {
+    let workoutCount = localStorage.getItem(workoutType);
+    if (workoutCount === null) {
+      localStorage.setItem(workoutType, 1);
+    } else {
+      localStorage.setItem(workoutType, parseInt(workoutCount) + 1);
+    }
+  }
+
   return (
     <div className="App">
 
@@ -324,9 +413,17 @@ function App() {
               <Typography variant="h6" color="inherit" className={classes.title}>
                 Fitness Assistant
               </Typography>
-              <Button color="inherit">Start Workout</Button>
-              <Button color="inherit">History</Button>
-              <Button color="inherit">Reset</Button>
+              <Button color="inherit"
+                onClick={handlePoseEstimation("START_WORKOUT")}
+                disabled={dataCollect || trainModel}>
+                {isPoseEstimationWorkout ? "Stop" : "Start Workout"}
+              </Button>
+              <Button color="inherit">
+                History
+              </Button>
+              <Button color="inherit">
+                Reset
+              </Button>
             </Toolbar>
           </AppBar>
         </Grid>
@@ -377,7 +474,7 @@ function App() {
                           Jumping Jacks
                         </Typography>
                         <Typography variant="h2" component="h2" color="secondary">
-                          75
+                          {jumpingJackCount}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -387,7 +484,7 @@ function App() {
                           Wall-Sit
                         </Typography>
                         <Typography variant="h2" component="h2" color="secondary">
-                          20
+                          {wallSitCount}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -397,7 +494,7 @@ function App() {
                           Lunges
                         </Typography>
                         <Typography variant="h2" component="h2" color="secondary">
-                          25
+                          {lungesCount}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -429,14 +526,14 @@ function App() {
                         onClick={() => handlePoseEstimation('COLLECT_DATA')}
                         color={isPoseEstimation ? 'secondary' : 'default'}
                         // When training is running, the Collect Data button should stay disabled.
-                        disabled={trainModel}>
+                        disabled={trainModel || isPoseEstimationWorkout}>
                         {isPoseEstimation ? "Stop" : "Collect Data"}
                       </Button>
                     </ Typography>
                     <Typography style={{ marginRight: 16 }}>
-                      <Button variant='contained>'
+                      <Button variant='contained'
                         onClick={() => handleTrainModel()}
-                        disabled={dataCollect}>
+                        disabled={dataCollect || isPoseEstimationWorkout}>
                         Train Model
                       </Button>
                     </Typography>
@@ -462,6 +559,11 @@ function App() {
       <Snackbar open={snackbarTrainingError} autoHideDuration={2000} onclose={closeSnackbarTrainingError}>
         <Alert onClose={closeSnackbarTrainingError} severity="error">
           Training data is not available!
+        </Alert>
+      </Snackbar>
+      <Snackbar open={snackbarWorkoutError} autoHideDuration={2000} onClose={closeSnackbarWorkoutError}>
+        <Alert onClose={closeSnackbarWorkoutError} severity="error">
+          Model is not avilable!
         </Alert>
       </Snackbar>
     </div>

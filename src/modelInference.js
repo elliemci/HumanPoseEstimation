@@ -3,6 +3,7 @@ import * as tf from '@tensorflow/tfjs';
 export function runInference(model, data) {
 
     console.log(data)
+    
     // 2d tensor to hold the array of 17 data points x and y coordinates ordered sequentially returned by the PoseNet
     const pose = tf.tensor2d(data.xs, [1, data.xs.length]);
     // call tensorlow.js predict method
