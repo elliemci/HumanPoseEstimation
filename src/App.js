@@ -166,6 +166,14 @@ function App() {
 
   const [historyDialog, setHistoryDialog] = useState(false);
 
+  const openHistoryDialog = () => {
+    setHistoryDialog(true);
+  }
+
+  const closeHistoryDialog = () => {
+    setHistoryDialog(false);
+  }
+
   const openSnackbarDataColl = () => {
     setSnackbarDataColl(true);
   };
@@ -450,17 +458,9 @@ function App() {
     }
   }
 
-  const openHistoryDialog = () => {
-    setHistoryDialog(true);
-  }
-
-  const closeHistoryDialog = () => {
-    setHistoryDialog(false);
-  }
-
   const showWorkoutHistory = () => {
     // read the workout information from local storage
-    let jjWorkoutCount = localStorage.getItem("JUMPING_JACK") === null ? 0 : localStorage.getItem("JUMPING_JACK");
+    let jjWorkoutCount = localStorage.getItem("JUMPING_JACKS") === null ? 0 : localStorage.getItem("JUMPING_JACKS");
     let wsWorkoutCount = localStorage.getItem("WALL_SIT") === null ? 0 : localStorage.getItem("WALL_SIT");
     let lWorkoutCount = localStorage.getItem("LUNGES") === null ? 0 : localStorage.getItem("LUNGES");
     // assign each workout count variable to the corresponding useState global variable
@@ -474,6 +474,7 @@ function App() {
   // After this function call, training data and model training need to be done from the start
   const resetAll = async () => {
     setRawData([]);
+
     setJumpingJackCount(0);
     setWallSitCount(0);
     setLungesCount(0);
@@ -640,50 +641,50 @@ function App() {
           </Card>
         </Grid>
       </Grid>
-      <Dialog onClose={closeHistoryDialog()} open={historyDialog} aria-labelledby="customized-dialog-title" maxWidth="md">
+      <Dialog onClose={closeHistoryDialog} aria-labelledby="customized-dialog-title" open={historyDialog} maxWidth="md">
         <DialogTitle id="customized-dialog-title" onClose={closeHistoryDialog}>
           Workout History
         </DialogTitle>
+        <DialogContent>
+          <Toolbar>
+            <Card className={classes.statsCard}>
+              <CardContent>
+                <Typography className={classes.title} color="textSecondary" gutterBottom>
+                  Jumping Jacks
+                </Typography>
+                <Typography variant="h2" component="h2" color="secondary">
+                  {jumpingJackCountTotal}
+                </Typography>
+              </CardContent>
+            </Card>
+            <Card className={classes.statsCard}>
+              <CardContent>
+                <Typography className={classes.title} color="textSecondary" gutterBottom>
+                  Wall-Sit
+                </Typography>
+                <Typography variant="h2" component="h2" color="secondary">
+                  {wallSitCountTotal}
+                </Typography>
+              </CardContent>
+            </Card>
+            <Card className={classes.statsCard}>
+              <CardContent>
+                <Typography className={classes.title} color="textSecondary" gutterBottom>
+                  Lunges
+                </Typography>
+                <Typography variant="h2" component="h2" color="secondary">
+                  {lungesCountTotal}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Toolbar>
+        </DialogContent>
+        <DialogActions>
+          <Button autoFocus onClick={closeHistoryDialog} color="primary">
+            Close
+          </Button>
+        </DialogActions>
       </Dialog>
-      <DialogContent>
-        <Toolbar>
-          <Card className={classes.statsCard}>
-            <CardContent>
-              <Typography className={classes.title} color="textSecondary" gutterBottom>
-                Jumping Jacks
-              </Typography>
-              <Typography variant="h2" component="h2" color="secondary">
-                {jumpingJackCountTotal}
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card className={classes.statsCard}>
-            <CardContent>
-              <Typography className={classes.title} color="textSecondary" gutterBottom>
-                Wall Sit
-              </Typography>
-              <Typography variant="h2" component="h2" color="secondary">
-                {wallSitCountTotal}
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card className={classes.statsCard}>
-            <CardContent>
-              <Typography className={classes.title} color="textSecondary" gutterBottom>
-                Lunges
-              </Typography>
-              <Typography variant="h2" component="h2" color="secondary">
-                {lungesCountTotal}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Toolbar>
-      </DialogContent>
-      <DialogActions>
-        <Button autoFocus color="primary" onClick={closeHistoryDialog}>
-          Close
-        </Button>
-      </DialogActions>
       <Snackbar open={snackbarDataColl} autoHideDuration={2000} onClose={closeSnackbarDataColl}>
         <Alert onClose={closeSnackbarDataColl} severity="info">
           Started collecting pose data!

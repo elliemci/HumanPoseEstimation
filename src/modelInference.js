@@ -15,7 +15,7 @@ export function runInference(model, data) {
     let result = null;
     // consider only classifications with probabilities higher than 99%
     if (probability > 0.7) {
-        const classNames = ["JUMPING_JACK", "WALL_SIT", "LUNGES"];
+        const classNames = ["JUMPING_JACKS", "WALL_SIT", "LUNGES"];
         console.log(classNames[pIndex] + ", probability: " + probability);
         result = classNames[pIndex];
     }
