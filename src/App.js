@@ -11,6 +11,14 @@ import { FormControl, InputLabel, NativeSelect, FormHelperText, Snackbar } from 
 import { makeStyles } from '@material-ui/core/styles';
 import MuiAlert from '@material-ui/lab/Alert';
 
+import { Dialog } from '@material-ui/core';
+import MuiDialogTitle from '@material-ui/core/DialogTitle';
+import MuiDialogContent from '@material-ui/core/DialogContent';
+import MuiDialogActions from '@material-ui/core/DialogActions';
+import { withStyles } from '@material-ui/core/styles';
+import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@material-ui/icons/Close';
+
 // import logo from './fitness_logo.png'
 import './App.css';
 
@@ -18,7 +26,48 @@ import '@tensorflow/tfjs-backend-webgl';
 
 import { processData } from "./dataProcessing";
 import { runTraining } from "./modelTraining";
-import { runInference } from "./modelInference"
+import { runInference } from "./modelInference";
+
+// code from the Material-UI Dialog component documentation
+const styles = (theme) => ({
+  root: {
+    margin: 0,
+    padding: theme.spacing(2),
+  },
+  closeButton: {
+    position: 'absolute',
+    right: theme.spacing(1),
+    top: theme.spacing(1),
+    color: theme.palette.grey[500],
+  },
+});
+
+const DialogTitle = withStyles(styles)((props) => {
+  const { children, classes, onClose, ...other } = props;
+  return (
+    <MuiDialogTitle disableTypography className={classes.root} {...other}>
+      <Typography variant="h6">{children}</Typography>
+      {onClose ? (
+        <IconButton aria-label="close" className={classes.closeButton} onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      ) : null}
+    </MuiDialogTitle>
+  );
+});
+
+const DialogContent = withStyles((theme) => ({
+  root: {
+    padding: theme.spacing(2),
+  },
+}))(MuiDialogContent);
+
+const DialogActions = withStyles((theme) => ({
+  root: {
+    margin: 0,
+    padding: theme.spacing(1),
+  },
+}))(MuiDialogActions);
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -54,7 +103,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-// helper function for delay functionality
+// helper function for delay functionality of inference on pose data
 const delay = (time) => {
   return new Promise((resolve, reject) => {
     if (isNaN(time)) {
@@ -67,7 +116,7 @@ const delay = (time) => {
 
 function App() {
 
-  // hooks that stores references to the DOM elements bypassesing the usua React state-to_UI flow
+  // hooks that stores references to the DOM elements bypassesing the usual React state-to_UI flow
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   // define a variable model with the useState hook to stores the PoseNet model
@@ -92,15 +141,16 @@ function App() {
   const [isPoseEstimationWorkout, setIsPoseEstimationWorkout] = useState(false);
 
   const classes = useStyles();
-  let runningWorkout = false;
 
   const windowWidth = 800;
   const windowHeight = 600;
 
-  // global variables
-  var modelWorkout = null;
-  var workoutCallDelay = false;
-  var workoutDelayStart = 0;
+  // define global variables with function scope
+  let state = 'waiting';
+  let runningWorkout = false;
+  let modelWorkout = null;
+  let workoutCallDelay = false;
+  let workoutDelayStart = 0;
 
   // variables for the UI cards
   const [jumpingJackCount, setJumpingJackCount] = useState(0);
@@ -110,8 +160,11 @@ function App() {
   const [lungesCount, setLungesCount] = useState(0);
   let lCount = 0;
 
+  const [jumpingJackCountTotal, setJumpingJackCountTotal] = useState(0);
+  const [wallSitCountTotal, setWallSitCountTotal] = useState(0);
+  const [lungesCountTotal, setLungesCountTotal] = useState(0);
 
-  let state = 'waiting';
+  const [historyDialog, setHistoryDialog] = useState(false);
 
   const openSnackbarDataColl = () => {
     setSnackbarDataColl(true);
@@ -188,6 +241,19 @@ function App() {
     setOpCollectData("inactive");
   };
 
+  // update local storage for workout type and increment counter for current workout type
+  const updateStats = (workoutType) => {
+    //console.log("Workout type: ", workoutType);
+    let workoutCount = localStorage.getItem(workoutType);
+    //console.log("Workout count: ", workoutCount)
+    if (workoutCount === null) {
+      localStorage.setItem(workoutType, 1);
+    } else {
+      console.log("Increase counter")
+      localStorage.setItem(workoutType, parseInt(workoutCount) + 1);
+    }
+  };
+
   // Load the PoseNet model, which runs on JavaScript API Web Graphics Library WebGL for rendering 2d
   const loadPosenet = async () => {
     // variables defined with let, so that can be re-assigned
@@ -248,7 +314,7 @@ function App() {
             inputs.push(y);
           }
 
-          console.log("STATE->" + state);
+          //console.log("STATE->" + state);
 
           if (state === "collecting") {
             console.log(toc - tic, " ms");
@@ -263,12 +329,15 @@ function App() {
             setRawData(rawData); // update raw data
 
           }
-          // code to process the inference results
+          // code to process the inference results; run inference with a delay after a successful classification
+          // NB: Make a delay time configurable as a UI input to hable inference sensitivity
           if (runningWorkout === true) {
             if (workoutCallDelay === false) {
+
               // variable to hold the data for inference
               const rawDataRow = { xs: inputs };
               const result = runInference(modelWorkout, rawDataRow);
+
               // process the result and count the workout type
               if (result !== null) {
                 if (result === 'JUMPING_JACKS') {
@@ -288,9 +357,9 @@ function App() {
                 workoutDelayStart = new Date().getTime();
               }
             } else {
-              // check if still keep the pause of 1.5 seconds before allow the next inference call
+              // inference with a delay, pause of 1.5 seconds before allow the next inference call
               const workoutTimeDiff = new Date().getTime() - workoutDelayStart;
-              if (workoutTimeDiff > 1500) {
+              if (workoutTimeDiff > 1500) { // inference time can't be that long as it will skip an expercise being done
                 workoutDelayStart = 0;
                 workoutCallDelay = false;
               }
@@ -381,14 +450,35 @@ function App() {
     }
   }
 
-  // update local storage for workout type and increment counter for current workout type
-  const updateStats = (workoutType) => {
-    let workoutCount = localStorage.getItem(workoutType);
-    if (workoutCount === null) {
-      localStorage.setItem(workoutType, 1);
-    } else {
-      localStorage.setItem(workoutType, parseInt(workoutCount) + 1);
-    }
+  const openHistoryDialog = () => {
+    setHistoryDialog(true);
+  }
+
+  const closeHistoryDialog = () => {
+    setHistoryDialog(false);
+  }
+
+  const showWorkoutHistory = () => {
+    // read the workout information from local storage
+    let jjWorkoutCount = localStorage.getItem("JUMPING_JACK") === null ? 0 : localStorage.getItem("JUMPING_JACK");
+    let wsWorkoutCount = localStorage.getItem("WALL_SIT") === null ? 0 : localStorage.getItem("WALL_SIT");
+    let lWorkoutCount = localStorage.getItem("LUNGES") === null ? 0 : localStorage.getItem("LUNGES");
+    // assign each workout count variable to the corresponding useState global variable
+    setJumpingJackCountTotal(jjWorkoutCount);
+    setWallSitCountTotal(wsWorkoutCount);
+    setLungesCountTotal(lWorkoutCount);
+
+    openHistoryDialog();
+  }
+
+  // After this function call, training data and model training need to be done from the start
+  const resetAll = async () => {
+    setRawData([]);
+    setJumpingJackCount(0);
+    setWallSitCount(0);
+    setLungesCount(0);
+
+    indexedDB.deleteDatabase('tensorflowjs');
   }
 
   return (
@@ -414,14 +504,18 @@ function App() {
                 Fitness Assistant
               </Typography>
               <Button color="inherit"
-                onClick={handlePoseEstimation("START_WORKOUT")}
+                onClick={() => handlePoseEstimation("START_WORKOUT")}
                 disabled={dataCollect || trainModel}>
                 {isPoseEstimationWorkout ? "Stop" : "Start Workout"}
               </Button>
-              <Button color="inherit">
+              <Button color="inherit"
+                onClick={() => showWorkoutHistory()}
+                disabled={dataCollect || trainModel}>
                 History
               </Button>
-              <Button color="inherit">
+              <Button color="inherit"
+                onClick={() => resetAll()}
+                disabled={dataCollect || trainModel || isPoseEstimationWorkout}>
                 Reset
               </Button>
             </Toolbar>
@@ -522,7 +616,7 @@ function App() {
                       {/* Button with text and color property, onClick event handler calls the handle PoseEstimation method
                         and passes COLLECT_DATA as argument. The button text and color property change when data has being collected 
                         When training is running, the Collect Data button should stay disabled. */}
-                      <Button variant='contained'
+                      <Button variant="contained"
                         onClick={() => handlePoseEstimation('COLLECT_DATA')}
                         color={isPoseEstimation ? 'secondary' : 'default'}
                         // When training is running, the Collect Data button should stay disabled.
@@ -531,7 +625,7 @@ function App() {
                       </Button>
                     </ Typography>
                     <Typography style={{ marginRight: 16 }}>
-                      <Button variant='contained'
+                      <Button variant="contained"
                         onClick={() => handleTrainModel()}
                         disabled={dataCollect || isPoseEstimationWorkout}>
                         Train Model
@@ -546,6 +640,50 @@ function App() {
           </Card>
         </Grid>
       </Grid>
+      <Dialog onClose={closeHistoryDialog()} open={historyDialog} aria-labelledby="customized-dialog-title" maxWidth="md">
+        <DialogTitle id="customized-dialog-title" onClose={closeHistoryDialog}>
+          Workout History
+        </DialogTitle>
+      </Dialog>
+      <DialogContent>
+        <Toolbar>
+          <Card className={classes.statsCard}>
+            <CardContent>
+              <Typography className={classes.title} color="textSecondary" gutterBottom>
+                Jumping Jacks
+              </Typography>
+              <Typography variant="h2" component="h2" color="secondary">
+                {jumpingJackCountTotal}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card className={classes.statsCard}>
+            <CardContent>
+              <Typography className={classes.title} color="textSecondary" gutterBottom>
+                Wall Sit
+              </Typography>
+              <Typography variant="h2" component="h2" color="secondary">
+                {wallSitCountTotal}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card className={classes.statsCard}>
+            <CardContent>
+              <Typography className={classes.title} color="textSecondary" gutterBottom>
+                Lunges
+              </Typography>
+              <Typography variant="h2" component="h2" color="secondary">
+                {lungesCountTotal}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Toolbar>
+      </DialogContent>
+      <DialogActions>
+        <Button autoFocus color="primary" onClick={closeHistoryDialog}>
+          Close
+        </Button>
+      </DialogActions>
       <Snackbar open={snackbarDataColl} autoHideDuration={2000} onClose={closeSnackbarDataColl}>
         <Alert onClose={closeSnackbarDataColl} severity="info">
           Started collecting pose data!
