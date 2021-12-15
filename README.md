@@ -1,6 +1,6 @@
 # Getting Started with Fitness Assistant
 
-Fitness Assistant is a React Web App using TensorFlow.js single-person PoseNet model which tracks human poses and classifies them. The React Material-UI libraries are used to implement the UI grid layout and logicto handle the user input. React component captures the live Webcam video stream, in which the human pose is detected.
+Fitness Assistant is a React Web App using TensorFlow.js single-person PoseNet model which tracks human poses and classifies them. The React Material-UI libraries are used to implement the UI grid layout and logic to handle the user input. React component captures the live Webcam video stream, in which the human pose is detected.
 The PoseNet model returns 17 keypoints. Each keypoint position is represented by a x and y coordinates and a score ranging from 0 to 1, representing model's confidence of the keypoint. The detected pose is displayed on top of the webcam view.
 
 The TensorFlow.js model is trained to classify workout exercises by type - Jumping Jacks, Wall-Sit and Lunges. It classifies a pose as one of the specified types when the return probability is above set streshold.
